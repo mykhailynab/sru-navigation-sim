@@ -1,8 +1,3 @@
-# Copyright (c) 2022-2025, Fan Yang and Per Frivik, ETH Zurich.
-# All rights reserved.
-#
-# SPDX-License-Identifier: MIT
-
 """Render a top-down view of all terrain types at two difficulty levels.
 
 Generates a 2x4 grid image:
@@ -44,14 +39,25 @@ def main():
     env_cfg: ManagerBasedRLEnvCfg = gym.spec(task).kwargs["env_cfg_entry_point"]()
     env = gym.make(task, cfg=env_cfg, render_mode="rgb_array")
 
-    # Reset and step to let rendering settle
+    # Reset and warm up the renderer
     env.reset()
-    for _ in range(10):
+    # The viewport annotator needs many render() calls to produce non-black output.
+    # Step the sim and call render explicitly to warm up.
+    for i in range(50):
         actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)
         env.step(actions)
-
-    # Capture frame
-    frame = env.unwrapped.render()
+        frame = env.unwrapped.render()
+        if frame is not None and frame.max() > 0:
+            print(f"[INFO] Renderer warmed up after {i + 1} steps")
+            break
+    else:
+        # Extra render passes if still black
+        for i in range(100):
+            env.unwrapped.sim.render()
+            frame = env.unwrapped.render()
+            if frame is not None and frame.max() > 0:
+                print(f"[INFO] Renderer warmed up after {i + 1} extra renders")
+                break
 
     if frame is not None:
         img = Image.fromarray(frame)
