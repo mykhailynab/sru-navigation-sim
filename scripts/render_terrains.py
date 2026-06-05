@@ -47,9 +47,9 @@ def main():
     for i in range(100):
         actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)
         env.step(actions)
+        frame = env.unwrapped.render()
         if i < min_steps:
             continue
-        frame = env.unwrapped.render()
         if frame is not None and frame.max() > 0:
             print(f"[INFO] Renderer warmed up after {i + 1} steps")
             break
