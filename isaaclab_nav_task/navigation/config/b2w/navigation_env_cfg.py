@@ -102,7 +102,7 @@ class B2WNavigationEnvCfg_VIZ(B2WNavigationEnvCfg):
         self.scene.terrain.terrain_generator.num_cols = 4
         self.scene.terrain.terrain_generator.curriculum = True
         self.scene.terrain.terrain_generator.difficulty_range = [0.25, 1.25]
-        self.scene.terrain.terrain_generator.border_width = 5.0
+        # self.scene.terrain.terrain_generator.border_width = 5.0
         self.scene.terrain.max_init_terrain_level = None
 
         # Equal proportions so each column gets exactly one terrain type
@@ -113,7 +113,7 @@ class B2WNavigationEnvCfg_VIZ(B2WNavigationEnvCfg):
         # after terrain generation (the monkey-patched TerrainGenerator does not center
         # the mesh at world origin). Portrait resolution: rotated 90° CW by the script
         # so that 4 terrain-type columns become the horizontal axis.
-        self.viewer.eye = (0.0, 0.0, 200.0)
+        self.viewer.eye = (0.0, 0.0, 100.0)
         self.viewer.lookat = (0.0, 0.0, 0.0)
         self.viewer.origin_type = "world"
         self.viewer.resolution = (960, 1920)
