@@ -41,11 +41,14 @@ def main():
 
     # Reset and warm up the renderer
     env.reset()
+    min_steps = 50
     # The viewport annotator needs many render() calls to produce non-black output.
     # Step the sim and call render explicitly to warm up.
-    for i in range(50):
+    for i in range(100):
         actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)
         env.step(actions)
+        if i < min_steps:
+            continue
         frame = env.unwrapped.render()
         if frame is not None and frame.max() > 0:
             print(f"[INFO] Renderer warmed up after {i + 1} steps")
