@@ -113,8 +113,8 @@ class B2WNavigationEnvCfg_VIZ(B2WNavigationEnvCfg):
         # after terrain generation (the monkey-patched TerrainGenerator does not center
         # the mesh at world origin). Portrait resolution: rotated 90° CW by the script
         # so that 4 terrain-type columns become the horizontal axis.
-        self.viewer.eye = (0.0, 0.0, 100.0)
-        self.viewer.lookat = (0.0, 0.0, 0.0)
+        self.viewer.eye = (30.0, 60.0, 100.0)
+        self.viewer.lookat = (30.0, 60.0, 0.0)
         self.viewer.origin_type = "world"
         self.viewer.resolution = (960, 1920)
 
