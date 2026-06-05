@@ -86,3 +86,35 @@ class B2WNavigationEnvCfg_PLAY(B2WNavigationEnvCfg):
         self.observations.policy.enable_corruption = False
         self.events.base_external_force_torque = None
         self.events.push_robot = None
+
+
+@configclass
+class B2WNavigationEnvCfg_VIZ(B2WNavigationEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        # Minimal env count — we only need the terrain mesh
+        self.scene.num_envs = 1
+        self.scene.env_spacing = 2.5
+
+        # 2x4 grid: 2 difficulty rows × 4 terrain type columns
+        self.scene.terrain.terrain_generator.num_rows = 2
+        self.scene.terrain.terrain_generator.num_cols = 4
+        self.scene.terrain.terrain_generator.curriculum = True
+        self.scene.terrain.terrain_generator.difficulty_range = [0.25, 1.25]
+        self.scene.terrain.max_init_terrain_level = None
+
+        # Equal proportions so each column gets exactly one terrain type
+        for sub_cfg in self.scene.terrain.terrain_generator.sub_terrains.values():
+            sub_cfg.proportion = 0.25
+
+        # Top-down camera: terrain centered at origin, eye directly above
+        self.viewer.eye = (0.0, 0.0, 200.0)
+        self.viewer.lookat = (0.0, 0.0, 0.0)
+        self.viewer.origin_type = "world"
+        self.viewer.resolution = (1920, 960)
+
+        # Disable corruption/randomization for clean renders
+        self.observations.policy.enable_corruption = False
+        self.events.base_external_force_torque = None
+        self.events.push_robot = None
