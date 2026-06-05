@@ -116,7 +116,7 @@ class B2WNavigationEnvCfg_VIZ(B2WNavigationEnvCfg):
         self.viewer.eye = (30.0, 60.0, 100.0)
         self.viewer.lookat = (30.0, 60.0, 0.0)
         self.viewer.origin_type = "world"
-        self.viewer.resolution = (960, 1920)
+        self.viewer.resolution = (3840, 7680)
 
         # Disable corruption/randomization for clean renders
         self.observations.policy.enable_corruption = False
