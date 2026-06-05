@@ -101,7 +101,8 @@ class B2WNavigationEnvCfg_VIZ(B2WNavigationEnvCfg):
         self.scene.terrain.terrain_generator.num_rows = 2
         self.scene.terrain.terrain_generator.num_cols = 4
         self.scene.terrain.terrain_generator.curriculum = True
-        self.scene.terrain.terrain_generator.difficulty_range = [0.25, 1.25]
+        # self.scene.terrain.terrain_generator.difficulty_range = [0.25, 1.25]
+        self.scene.terrain.terrain_generator.difficulty_range = [1.0, 1.0]
         # self.scene.terrain.terrain_generator.border_width = 5.0
         self.scene.terrain.max_init_terrain_level = None
 
