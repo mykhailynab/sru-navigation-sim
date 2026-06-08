@@ -250,6 +250,83 @@ class ObservationsCfg:
     critic: CriticCfg = CriticCfg()
     low_level_policy: LowLevelPolicyCfg = LowLevelPolicyCfg()
 
+
+@configclass
+class ObservationsCfgAblatePrioperceptive:
+    """Observation specifications for the MDP. Ablate lin vel, ang vel and gravity"""
+
+    @configclass
+    class PolicyCfg(ObsGroup):
+        """Observations for policy group."""
+
+        last_action = ObsTerm(func=mdp.last_action)
+        target_position = ObsTerm(
+            func=mdp.generated_commands_reshaped_delayed,
+            params={"command_name": "robot_goal", "flatten": True},
+            noise=DeltaTransformationNoiseCfg(rotation=0.1, translation=0.5, noise_prob=0.1, remove_dist=False),
+        )
+        depth_image = ObsTerm(
+            func=mdp.depth_image_noisy_delayed, params={"sensor_cfg": SceneEntityCfg("raycast_camera")}
+        )
+
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True
+
+    @configclass
+    class CriticCfg(ObsGroup):
+        """Observations for critic group."""
+
+        base_lin_vel = ObsTerm(func=mdp.base_lin_vel)
+        base_ang_vel = ObsTerm(func=mdp.base_ang_vel)
+        projected_gravity = ObsTerm(func=mdp.projected_gravity)
+        last_action = ObsTerm(func=mdp.last_action)
+        target_position = ObsTerm(
+            func=mdp.generated_commands_reshaped, params={"command_name": "robot_goal", "flatten": True}
+        )
+        time_normalized = ObsTerm(func=mdp.time_normalized, params={"command_name": "robot_goal"})
+        height_scan_critic = ObsTerm(
+            func=mdp.height_scan_feat, params={"sensor_cfg": SceneEntityCfg("height_scanner_critic")}
+        )
+        depth_image = ObsTerm(func=mdp.depth_image_prefect, params={"sensor_cfg": SceneEntityCfg("raycast_camera")})
+
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True
+
+    @configclass
+    class LowLevelPolicyCfg(ObsGroup):
+        """Observations for low-level policy."""
+
+        base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
+        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
+        projected_gravity = ObsTerm(func=mdp.projected_gravity, noise=Unoise(n_min=-0.1, n_max=0.1))
+        velocity_commands = ObsTerm(func=mdp.generated_actions, params={"action_name": "velocity_command"})
+        joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.2, n_max=0.2))
+        joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-1.5, n_max=1.5))
+        actions = ObsTerm(func=mdp.last_low_level_action, params={"action_term": "velocity_command"})
+
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True
+
+    @configclass
+    class MetricsCfg(ObsGroup):
+        """Observations for metrics tracking."""
+
+        in_goal = ObsTerm(func=mdp.in_goal)
+
+        def __post_init__(self):
+            self.enable_corruption = False
+            self.concatenate_terms = False
+
+    # Observation groups
+    metrics: MetricsCfg = MetricsCfg()
+    policy: PolicyCfg = PolicyCfg()
+    critic: CriticCfg = CriticCfg()
+    low_level_policy: LowLevelPolicyCfg = LowLevelPolicyCfg()
+
+
 @configclass
 class EventCfg:
     """Configuration for events."""

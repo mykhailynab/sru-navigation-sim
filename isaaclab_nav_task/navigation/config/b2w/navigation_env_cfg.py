@@ -10,7 +10,7 @@ import os
 from isaaclab.utils import configclass
 from isaaclab.managers import SceneEntityCfg
 
-from isaaclab_nav_task.navigation.navigation_env_cfg import NavigationEnvCfg
+from isaaclab_nav_task.navigation.navigation_env_cfg import NavigationEnvCfg, ObservationsCfgAblatePrioperceptive
 import isaaclab_nav_task.navigation.mdp as mdp
 
 from isaaclab_nav_task.navigation.assets import B2W_CFG, ISAACLAB_NAV_TASKS_ASSETS_DIR  # isort: skip
@@ -60,6 +60,13 @@ class B2WNavigationEnvCfg(NavigationEnvCfg):
         self.scene.terrain.max_init_terrain_level = 10
         self.scene.terrain.terrain_generator.difficulty_range = [0.5, 1.0]
         self.scene.terrain.terrain_generator.curriculum = False
+
+@configclass
+class B2WNavigationEnvCfgAblatePrioperceptive(B2WNavigationEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.observations = ObservationsCfgAblatePrioperceptive()
 
 @configclass
 class B2WNavigationEnvCfg_DEV(B2WNavigationEnvCfg):
