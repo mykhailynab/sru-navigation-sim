@@ -7,7 +7,7 @@ episode length per terrain type.
 
 Usage:
     ./isaaclab.sh -p source/isaaclab_nav_task/scripts/test.py --task Isaac-Nav-MDPO-B2W-Test-v0 --headless
-    ./isaaclab.sh -p source/isaaclab_nav_task/scripts/test.py --task Isaac-Nav-MDPO-B2W-Test-v0 --checkpoint path/to/model.pt --headless
+    ./isaaclab.sh -p source/isaaclab_nav_task/scripts/test.py --task Isaac-Nav-MDPO-B2W-Test-v0 --checkpoint logs/rsl_rl/b2w_navigation_mdpo/b2w_navigation_mdpo/2026-05-22_11-55-51/model_14999.pt --headless
     ./isaaclab.sh -p source/isaaclab_nav_task/scripts/test.py --task Isaac-Nav-PPO-B2W-Test-v0 --num_episodes 120 --headless
 """
 
@@ -40,6 +40,7 @@ import time
 
 import gymnasium as gym
 import torch
+from tqdm import tqdm
 
 from rsl_rl.runners import OnPolicyRunner
 
@@ -138,7 +139,9 @@ def main():
     print(f"[INFO] Starting evaluation: {num_episodes} episodes across {num_envs} environments")
     print(f"[INFO] Terrain types: {type_names}")
     t_start = time.time()
-    last_report = 0
+    successes = 0
+
+    pbar = tqdm(total=num_episodes, desc="Evaluating", unit="ep")
 
     while len(episodes) < num_episodes:
         prev_write_idx = success_tracker.write_index.clone()
@@ -158,6 +161,7 @@ def main():
         done_mask = dones > 0
         if done_mask.any():
             done_ids = done_mask.nonzero(as_tuple=False).squeeze(-1)
+            new_eps = 0
             for eid in done_ids.cpu().tolist():
                 if len(episodes) >= num_episodes:
                     break
@@ -178,18 +182,17 @@ def main():
                     "episode_reward": cur_reward_sum[eid].item(),
                     "episode_length": cur_episode_length[eid].item(),
                 })
+                successes += int(success)
+                new_eps += 1
 
             cur_reward_sum[done_ids] = 0.0
             cur_episode_length[done_ids] = 0
 
-        # Progress report every 500 episodes
-        n = len(episodes)
-        if n >= last_report + 500:
-            sr = sum(e["success"] for e in episodes) / n * 100
-            elapsed = time.time() - t_start
-            print(f"[INFO] Episodes: {n}/{num_episodes} ({n / num_episodes * 100:.1f}%) | SR: {sr:.1f}% | {elapsed:.0f}s")
-            last_report = (n // 500) * 500
+            if new_eps > 0:
+                pbar.update(new_eps)
+                pbar.set_postfix(SR=f"{successes / len(episodes) * 100:.1f}%")
 
+    pbar.close()
     elapsed = time.time() - t_start
     print(f"[INFO] Evaluation complete: {len(episodes)} episodes in {elapsed:.1f}s")
 
