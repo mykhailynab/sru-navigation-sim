@@ -123,3 +123,22 @@ class B2WNavigationEnvCfg_VIZ(B2WNavigationEnvCfg):
         self.observations.policy.enable_corruption = False
         self.events.base_external_force_torque = None
         self.events.push_robot = None
+
+
+@configclass
+class B2WNavigationEnvCfg_TEST(B2WNavigationEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.scene.num_envs = 120
+        # 30 rows × 4 cols = 120 tiles. curriculum=True → deterministic col-to-type mapping:
+        # col 0=maze, 1=non_maze (pillars), 2=stairs, 3=pits
+        self.scene.terrain.terrain_generator.num_rows = 30
+        self.scene.terrain.terrain_generator.num_cols = 4
+        self.scene.terrain.terrain_generator.curriculum = True
+        self.scene.terrain.terrain_generator.difficulty_range = [1.0, 1.0]
+        self.scene.terrain.max_init_terrain_level = None
+
+        # Equal proportions so each column gets exactly one terrain type
+        for sub_cfg in self.scene.terrain.terrain_generator.sub_terrains.values():
+            sub_cfg.proportion = 0.25
