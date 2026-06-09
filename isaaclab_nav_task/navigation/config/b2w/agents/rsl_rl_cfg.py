@@ -71,6 +71,27 @@ class B2WNavMDPORunnerDevCfg(B2WNavMDPORunnerCfg):
 
 
 @configclass
+class B2WNavMDPOLSTMRunnerCfg(B2WNavMDPORunnerCfg):
+    """MDPO runner with standard LSTM instead of LSTM_SRU (ablation)."""
+
+    experiment_name = "b2w_navigation_mdpo_lstm"
+    policy = RslRlPpoActorCriticCfg(
+        class_name="ActorCriticSRU",
+        init_noise_std=1.0,
+        actor_hidden_dims=[512, 256, 128],
+        critic_hidden_dims=[512, 256, 128],
+        activation="elu",
+        rnn_hidden_size=512,
+        rnn_type="lstm",
+        rnn_num_layers=1,
+        dropout=0.2,
+        num_cameras=1,
+        image_input_dims=(64, 5, 8),  # depth image: 64 channels * 5 * 8 = 2560
+        height_input_dims=(64, 7, 7),  # encoded height_scan_critic: 64*7*7 = 3136
+    )
+
+
+@configclass
 class B2WNavPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     """PPO runner configuration for B2W navigation."""
 
