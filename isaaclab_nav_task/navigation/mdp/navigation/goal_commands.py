@@ -532,6 +532,13 @@ class RobotNavigationGoalCommand(CommandTerm):
         height_offset = torch.rand(len(env_ids), device=self.device) * 0.6 + 0.2
         self.goal_position_world[env_ids, 2] = goal_z + height_offset
 
+        # Teleport goal sphere if present (visual target ablation)
+        if "goal_sphere" in self.env.scene:
+            goal_sphere = self.env.scene["goal_sphere"]
+            identity_quat = torch.tensor([[1.0, 0.0, 0.0, 0.0]], device=self.device).expand(len(env_ids), -1)
+            root_pose = torch.cat([self.goal_position_world[env_ids], identity_quat], dim=-1)
+            goal_sphere.write_root_pose_to_sim(root_pose, env_ids=env_ids)
+
         # Small spawn height offset to prevent clipping into terrain
         # Note: The robot's default_root_state already includes standing height (~0.5m)
         spawn_offset = 0.05

@@ -257,7 +257,7 @@ class ObservationsCfgAblatePrioperceptive:
 
     @configclass
     class PolicyCfg(ObsGroup):
-        """Observations for policy group."""
+        """Observations for policy group — no lin_vel, ang_vel, projected_gravity."""
 
         last_action = ObsTerm(func=mdp.last_action)
         target_position = ObsTerm(
@@ -273,58 +273,16 @@ class ObservationsCfgAblatePrioperceptive:
             self.enable_corruption = True
             self.concatenate_terms = True
 
-    @configclass
-    class CriticCfg(ObsGroup):
-        """Observations for critic group."""
-
-        base_lin_vel = ObsTerm(func=mdp.base_lin_vel)
-        base_ang_vel = ObsTerm(func=mdp.base_ang_vel)
-        projected_gravity = ObsTerm(func=mdp.projected_gravity)
-        last_action = ObsTerm(func=mdp.last_action)
-        target_position = ObsTerm(
-            func=mdp.generated_commands_reshaped, params={"command_name": "robot_goal", "flatten": True}
-        )
-        time_normalized = ObsTerm(func=mdp.time_normalized, params={"command_name": "robot_goal"})
-        height_scan_critic = ObsTerm(
-            func=mdp.height_scan_feat, params={"sensor_cfg": SceneEntityCfg("height_scanner_critic")}
-        )
-        depth_image = ObsTerm(func=mdp.depth_image_prefect, params={"sensor_cfg": SceneEntityCfg("raycast_camera")})
-
-        def __post_init__(self):
-            self.enable_corruption = True
-            self.concatenate_terms = True
-
-    @configclass
-    class LowLevelPolicyCfg(ObsGroup):
-        """Observations for low-level policy."""
-
-        base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
-        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
-        projected_gravity = ObsTerm(func=mdp.projected_gravity, noise=Unoise(n_min=-0.1, n_max=0.1))
-        velocity_commands = ObsTerm(func=mdp.generated_actions, params={"action_name": "velocity_command"})
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.2, n_max=0.2))
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-1.5, n_max=1.5))
-        actions = ObsTerm(func=mdp.last_low_level_action, params={"action_term": "velocity_command"})
-
-        def __post_init__(self):
-            self.enable_corruption = True
-            self.concatenate_terms = True
-
-    @configclass
-    class MetricsCfg(ObsGroup):
-        """Observations for metrics tracking."""
-
-        in_goal = ObsTerm(func=mdp.in_goal)
-
-        def __post_init__(self):
-            self.enable_corruption = False
-            self.concatenate_terms = False
+    # Reuse unchanged groups from base ObservationsCfg
+    CriticCfg = ObservationsCfg.CriticCfg
+    LowLevelPolicyCfg = ObservationsCfg.LowLevelPolicyCfg
+    MetricsCfg = ObservationsCfg.MetricsCfg
 
     # Observation groups
-    metrics: MetricsCfg = MetricsCfg()
+    metrics: ObservationsCfg.MetricsCfg = ObservationsCfg.MetricsCfg()
     policy: PolicyCfg = PolicyCfg()
-    critic: CriticCfg = CriticCfg()
-    low_level_policy: LowLevelPolicyCfg = LowLevelPolicyCfg()
+    critic: ObservationsCfg.CriticCfg = ObservationsCfg.CriticCfg()
+    low_level_policy: ObservationsCfg.LowLevelPolicyCfg = ObservationsCfg.LowLevelPolicyCfg()
 
 
 @configclass
@@ -471,6 +429,81 @@ class CurriculumCfg:
         func=mdp.disable_backward_penalty_after_steps,
         params={"disable_after_steps": 500, "action_term": "velocity_command"},
     )
+
+@configclass
+class ObservationsCfgBallTarget:
+    """Observations with target_position removed from policy (visual target ablation).
+
+    The robot must find the physical goal ball visually via depth camera
+    instead of receiving an explicit goal coordinate.
+    Critic retains target_position as privileged info.
+    """
+
+    @configclass
+    class PolicyCfg(ObsGroup):
+        """Observations for policy group — no target_position."""
+        base_lin_vel = ObsTerm(
+            func=mdp.base_lin_vel_delayed, noise=Unoise(n_min=-0.2, n_max=0.2)
+        )
+        base_ang_vel = ObsTerm(
+            func=mdp.base_ang_vel_delayed, noise=Unoise(n_min=-0.1, n_max=0.1)
+        )
+        projected_gravity = ObsTerm(
+            func=mdp.projected_gravity_delayed, noise=Unoise(n_min=-0.1, n_max=0.1)
+        )
+        last_action = ObsTerm(func=mdp.last_action)
+        depth_image = ObsTerm(
+            func=mdp.depth_image_noisy_delayed, params={"sensor_cfg": SceneEntityCfg("raycast_camera")}
+        )
+
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True
+
+    @configclass
+    class MetricsCfg(ObsGroup):
+        """Observations for metrics tracking — threshold increased for ball radius."""
+
+        in_goal = ObsTerm(func=mdp.in_goal, params={"distance_threshold": 1.0})
+
+        def __post_init__(self):
+            self.enable_corruption = False
+            self.concatenate_terms = False
+
+    # Reuse unchanged groups from base ObservationsCfg
+    CriticCfg = ObservationsCfg.CriticCfg
+    LowLevelPolicyCfg = ObservationsCfg.LowLevelPolicyCfg
+
+    # Observation groups
+    metrics: MetricsCfg = MetricsCfg()
+    policy: PolicyCfg = PolicyCfg()
+    critic: ObservationsCfg.CriticCfg = ObservationsCfg.CriticCfg()
+    low_level_policy: ObservationsCfg.LowLevelPolicyCfg = ObservationsCfg.LowLevelPolicyCfg()
+
+
+@configclass
+class RewardsCfgBallTarget(RewardsCfg):
+    """Reward terms with sigmoids increased by ball radius (0.5m) for visual target ablation."""
+
+    reach_goal_xy_soft = RewTerm(
+        func=mdp.reach_goal_xyz,
+        weight=0.25,
+        params={"command_name": "robot_goal", "sigmoid": 3.0, "T_r": 1.0, "probability": 0.01, "flat": False, "ratio": False},
+    )
+    reach_goal_xy_tight = RewTerm(
+        func=mdp.reach_goal_xyz,
+        weight=1.5,
+        params={"command_name": "robot_goal", "sigmoid": 0.75, "T_r": 0.1, "probability": 0.01, "flat": True, "ratio": False},
+    )  # NOTE: We can change this to a sum of two sigmoids, so we don't have the highest reward at goal, but around it
+
+
+@configclass
+class TerminationsCfgBallTarget(TerminationsCfg):
+    """Termination terms with distance thresholds increased by ball radius (0.5m)."""
+
+    time_out = DoneTerm(func=mdp.time_out_navigation, time_out=True, params={"distance_threshold": 1.0})
+    early_termination = DoneTerm(func=mdp.at_goal_navigation, time_out=True, params={"distance_threshold": 1.0})
+
 
 ##
 # Environment configuration

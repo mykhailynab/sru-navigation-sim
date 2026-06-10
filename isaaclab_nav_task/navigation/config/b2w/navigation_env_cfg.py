@@ -10,7 +10,16 @@ import os
 from isaaclab.utils import configclass
 from isaaclab.managers import SceneEntityCfg
 
-from isaaclab_nav_task.navigation.navigation_env_cfg import NavigationEnvCfg, ObservationsCfgAblatePrioperceptive
+import isaaclab.sim as sim_utils
+from isaaclab.assets import RigidObjectCfg
+
+from isaaclab_nav_task.navigation.navigation_env_cfg import (
+    NavigationEnvCfg,
+    ObservationsCfgAblatePrioperceptive,
+    ObservationsCfgBallTarget,
+    RewardsCfgBallTarget,
+    TerminationsCfgBallTarget,
+)
 import isaaclab_nav_task.navigation.mdp as mdp
 
 from isaaclab_nav_task.navigation.assets import B2W_CFG, ISAACLAB_NAV_TASKS_ASSETS_DIR  # isort: skip
@@ -67,6 +76,36 @@ class B2WNavigationEnvCfgAblatePrioperceptive(B2WNavigationEnvCfg):
         super().__post_init__()
 
         self.observations = ObservationsCfgAblatePrioperceptive()
+
+@configclass
+class B2WNavigationEnvCfgBallTarget(B2WNavigationEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        # Swap observations, rewards, terminations for visual target ablation
+        self.observations = ObservationsCfgBallTarget()
+        self.rewards = RewardsCfgBallTarget()
+        self.terminations = TerminationsCfgBallTarget()
+
+        # Override B2W-specific reward+termination params
+        self.rewards.joint_acc_l2_joint.params = {"asset_cfg": SceneEntityCfg("robot", joint_names=LEG_JOINT_NAMES+WHEEL_JOINT_NAMES)}
+        self.terminations.base_contact.params = {"sensor_cfg": SceneEntityCfg("contact_forces", body_names=["base_link", ".*hip", ".*thigh"]), "threshold": 1.0}
+
+        # Add goal sphere to scene (kinematic, collidable, 1m diameter)
+        self.scene.goal_sphere = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/goal_sphere",
+            spawn=sim_utils.SphereCfg(
+                radius=0.5,
+                rigid_props=sim_utils.RigidBodyPropertiesCfg(kinematic_enabled=True),
+                collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=True),
+                visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 0.0, 0.0)),
+            ),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, -10.0)),
+        )
+
+        # Make depth camera see the sphere
+        self.scene.raycast_camera.mesh_prim_paths = ["/World/ground", "{ENV_REGEX_NS}/goal_sphere"]
+
 
 @configclass
 class B2WNavigationEnvCfg_DEV(B2WNavigationEnvCfg):

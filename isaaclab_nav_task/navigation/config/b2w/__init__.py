@@ -35,6 +35,16 @@ gym.register(
 )
 
 gym.register(
+    id="Isaac-Nav-MDPO-B2W-BallTarget-v0",
+    entry_point="isaaclab_nav_task.navigation:NavigationEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": navigation_env_cfg.B2WNavigationEnvCfgBallTarget,
+        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.B2WNavMDPORunnerCfg,
+    },
+)
+
+gym.register(
     id="Isaac-Nav-MDPO-B2W-AblatePriop-v0",
     entry_point="isaaclab_nav_task.navigation:NavigationEnv",
     disable_env_checker=True,
