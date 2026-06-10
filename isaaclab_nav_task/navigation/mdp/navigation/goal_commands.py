@@ -533,7 +533,7 @@ class RobotNavigationGoalCommand(CommandTerm):
         self.goal_position_world[env_ids, 2] = goal_z + height_offset
 
         # Teleport goal sphere if present (visual target ablation)
-        if "goal_sphere" in self.env.scene:
+        if hasattr(self.env.scene.cfg, "goal_sphere"):
             goal_sphere = self.env.scene["goal_sphere"]
             identity_quat = torch.tensor([[1.0, 0.0, 0.0, 0.0]], device=self.device).expand(len(env_ids), -1)
             root_pose = torch.cat([self.goal_position_world[env_ids], identity_quat], dim=-1)
