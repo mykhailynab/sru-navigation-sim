@@ -125,6 +125,33 @@ class B2WNavigationEnvCfgBallTarget(B2WNavigationEnvCfg):
 
 
 @configclass
+class B2WNavigationEnvCfgBallTarget_VIZ(B2WNavigationEnvCfgBallTarget):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.scene.num_envs = 1
+        self.scene.env_spacing = 2.5
+
+        self.scene.terrain.terrain_generator.num_rows = 2
+        self.scene.terrain.terrain_generator.num_cols = 4
+        self.scene.terrain.terrain_generator.curriculum = True
+        self.scene.terrain.terrain_generator.difficulty_range = [1.0, 1.0]
+        self.scene.terrain.max_init_terrain_level = None
+
+        for sub_cfg in self.scene.terrain.terrain_generator.sub_terrains.values():
+            sub_cfg.proportion = 0.25
+
+        self.viewer.eye = (30.0, 60.0, 100.0)
+        self.viewer.lookat = (30.0, 60.0, 0.0)
+        self.viewer.origin_type = "world"
+        self.viewer.resolution = (3840, 7680)
+
+        self.observations.policy.enable_corruption = False
+        self.events.base_external_force_torque = None
+        self.events.push_robot = None
+
+
+@configclass
 class B2WNavigationEnvCfg_DEV(B2WNavigationEnvCfg):
     def __post_init__(self):
         super().__post_init__()

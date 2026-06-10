@@ -7,6 +7,7 @@ Generates a 2x4 grid image:
 Usage:
     ./isaaclab.sh -p source/isaaclab_nav_task/scripts/render_terrains.py
     ./isaaclab.sh -p source/isaaclab_nav_task/scripts/render_terrains.py --output my_terrains.png
+    ./isaaclab.sh -p source/isaaclab_nav_task/scripts/render_terrains.py --ball-target
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from isaaclab.app import AppLauncher
 
 parser = argparse.ArgumentParser(description="Render top-down terrain visualization.")
 parser.add_argument("--output", type=str, default="terrain_grid.png", help="Output image path.")
+parser.add_argument("--ball-target", action="store_true", default=False, help="Use BallTarget variant (includes goal sphere).")
 AppLauncher.add_app_launcher_args(parser)
 args_cli, _ = parser.parse_known_args()
 
@@ -35,7 +37,7 @@ from isaaclab.envs import ManagerBasedRLEnvCfg
 
 
 def main():
-    task = "Isaac-Nav-MDPO-B2W-Viz-v0"
+    task = "Isaac-Nav-MDPO-B2W-BallTarget-Viz-v0" if args_cli.ball_target else "Isaac-Nav-MDPO-B2W-Viz-v0"
     env_cfg: ManagerBasedRLEnvCfg = gym.spec(task).kwargs["env_cfg_entry_point"]()
     env = gym.make(task, cfg=env_cfg, render_mode="rgb_array")
 
