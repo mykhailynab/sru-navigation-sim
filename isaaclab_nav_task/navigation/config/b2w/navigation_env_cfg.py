@@ -103,8 +103,25 @@ class B2WNavigationEnvCfgBallTarget(B2WNavigationEnvCfg):
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, -10.0)),
         )
 
-        # Make depth camera see the sphere
-        self.scene.raycast_camera.mesh_prim_paths = ["/World/ground", "{ENV_REGEX_NS}/goal_sphere"]
+        # Replace raycast camera with multi-mesh variant to see the goal sphere
+        from isaaclab.sensors import MultiMeshRayCasterCameraCfg
+        old_cam = self.scene.raycast_camera
+        self.scene.raycast_camera = MultiMeshRayCasterCameraCfg(
+            prim_path=old_cam.prim_path,
+            mesh_prim_paths=[
+                "/World/ground",
+                MultiMeshRayCasterCameraCfg.RaycastTargetCfg(
+                    prim_expr="{ENV_REGEX_NS}/goal_sphere",
+                    track_mesh_transforms=True,
+                ),
+            ],
+            update_period=old_cam.update_period,
+            offset=old_cam.offset,
+            data_types=old_cam.data_types,
+            debug_vis=old_cam.debug_vis,
+            max_distance=old_cam.max_distance,
+            pattern_cfg=old_cam.pattern_cfg,
+        )
 
 
 @configclass
