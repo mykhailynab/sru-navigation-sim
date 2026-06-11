@@ -138,7 +138,7 @@ def main():
     # Center-crop 50% of each frame (keep middle 50% height and width)
     stacked = np.stack(frames)
     _, h, w, _ = stacked.shape
-    h4, w4 = max(h // 4 - 100, 0), max(w // 4 - 100, 0)
+    h4, w4 = max(h // 4 - 200, 0), max(w // 4 - 100, 0)
     stacked = stacked[:, h4:h - h4, w4:w - w4, :]
 
     # Write mp4 using imageio
