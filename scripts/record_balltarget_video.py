@@ -45,6 +45,7 @@ import gymnasium as gym
 import numpy as np
 import os
 import torch
+from tqdm import tqdm
 
 from rsl_rl.runners import OnPolicyRunner
 
@@ -101,23 +102,24 @@ def main():
     obs = obs_dict["policy"]
 
     # Warm up renderer (zero actions to keep agents stationary)
-    print("[INFO] Warming up renderer...")
     zero_actions = torch.zeros(args_cli.num_envs, env.num_actions, device=env.unwrapped.device)
     min_warmup = 50
-    for i in range(100):
+    warmup_pbar = tqdm(range(100), desc="Warming up renderer")
+    for i in warmup_pbar:
         obs_dict, _, _, _ = env.step(zero_actions)
         obs = obs_dict["policy"]
         frame = env.unwrapped.render()
         if i < min_warmup:
             continue
         if frame is not None and frame.max() > 0:
+            warmup_pbar.close()
             print(f"[INFO] Renderer warmed up after {i + 1} steps")
             break
+    warmup_pbar.close()
 
     # Record frames
-    print(f"[INFO] Recording {args_cli.num_steps} steps...")
     frames = []
-    for step in range(args_cli.num_steps):
+    for step in tqdm(range(args_cli.num_steps), desc="Recording"):
         with torch.inference_mode():
             actions = policy(obs)
         obs_dict, _, _, _ = env.step(actions)
@@ -126,9 +128,6 @@ def main():
         frame = env.unwrapped.render()
         if frame is not None and frame.max() > 0:
             frames.append(frame)
-
-        if (step + 1) % 100 == 0:
-            print(f"  Step {step + 1}/{args_cli.num_steps} ({len(frames)} frames captured)")
 
     env.close()
 
