@@ -41,11 +41,12 @@ app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
 # --- Imports after AppLauncher ---
-import gymnasium as gym
-import numpy as np
 import os
 import torch
+import numpy as np
 from tqdm import tqdm
+import gymnasium as gym
+import imageio.v2 as iio
 
 from rsl_rl.runners import OnPolicyRunner
 
@@ -117,8 +118,11 @@ def main():
             break
     warmup_pbar.close()
 
-    # Record frames
-    frames = []
+    fps = 30
+    output_path = os.path.abspath(args_cli.output)
+    writer = None
+    num_frames = 0
+
     for step in tqdm(range(args_cli.num_steps), desc="Recording"):
         with torch.inference_mode():
             actions = policy(obs)
@@ -126,29 +130,27 @@ def main():
         obs = obs_dict["policy"]
 
         frame = env.unwrapped.render()
-        if frame is not None and frame.max() > 0:
-            frames.append(frame)
+        if frame is None or frame.max() == 0:
+            continue
+
+        # Center-crop frame
+        h, w = frame.shape[:2]
+        h4, w4 = max(h // 4 - 200, 0), max(w // 4 - 100, 0)
+        frame = frame[h4:h - h4, w4:w - w4]
+
+        if writer is None:
+            writer = iio.get_writer(output_path, fps=fps, codec="h264")
+            print(f"[INFO] Writing {frame.shape[0]}x{frame.shape[1]} frames at {fps} FPS to: {output_path}")
+        writer.append_data(frame)
+        num_frames += 1
 
     env.close()
 
-    if not frames:
+    if writer is not None:
+        writer.close()
+        print(f"[INFO] Done! {num_frames} frames written to: {output_path}")
+    else:
         print("[ERROR] No frames captured — check that cameras are enabled")
-        return
-
-    # Center-crop 50% of each frame (keep middle 50% height and width)
-    stacked = np.stack(frames)
-    _, h, w, _ = stacked.shape
-    h4, w4 = max(h // 4 - 200, 0), max(w // 4 - 100, 0)
-    stacked = stacked[:, h4:h - h4, w4:w - w4, :]
-
-    # Write mp4 using imageio
-    import imageio.v3 as iio
-
-    fps = 30
-    output_path = os.path.abspath(args_cli.output)
-    print(f"[INFO] Writing {len(frames)} frames ({stacked.shape[1]}x{stacked.shape[2]}) at {fps} FPS to: {output_path}")
-    iio.imwrite(output_path, stacked, fps=fps, codec="h264")
-    print(f"[INFO] Done! Video saved to: {output_path}")
 
 
 if __name__ == "__main__":
