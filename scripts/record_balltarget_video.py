@@ -89,6 +89,19 @@ def main():
 
     # Create environment with rgb_array for frame capture
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array")
+
+    # Override terrain assignment: 1 robot per tile, evenly distributed
+    terrain = env.unwrapped.scene.terrain
+    num_rows = terrain.cfg.terrain_generator.num_rows
+    num_cols = terrain.cfg.terrain_generator.num_cols
+    num_tiles = num_rows * num_cols
+    device = terrain.device
+    # Assign levels (rows) and types (cols) to cover all tiles, wrapping if num_envs > num_tiles
+    tile_ids = torch.arange(args_cli.num_envs, device=device) % num_tiles
+    terrain.terrain_levels[:] = tile_ids // num_cols
+    terrain.terrain_types[:] = tile_ids % num_cols
+    terrain.env_origins[:] = terrain.terrain_origins[terrain.terrain_levels, terrain.terrain_types]
+
     env = RslRlVecEnvWrapper(env)
 
     # Create runner and load checkpoint
