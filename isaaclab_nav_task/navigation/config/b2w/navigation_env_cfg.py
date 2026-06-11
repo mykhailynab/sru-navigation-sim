@@ -123,7 +123,7 @@ class B2WNavigationEnvCfgBallTarget(B2WNavigationEnvCfg):
             pattern_cfg=old_cam.pattern_cfg,
         )
 
-        self.scene.terrain.terrain_generator.difficulty_range = [0.1, 1.0]
+        self.scene.terrain.terrain_generator.difficulty_range = [0.0, 1.0]
 
 
 @configclass
