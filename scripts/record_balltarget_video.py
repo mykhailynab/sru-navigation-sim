@@ -84,7 +84,7 @@ def main():
     env_cfg.scene.num_envs = args_cli.num_envs
 
     # Use a reasonable video resolution (landscape 1920x1080)
-    env_cfg.viewer.resolution = (1920, 1080)
+    env_cfg.viewer.resolution = (1080, 1920)
 
     # Create environment with rgb_array for frame capture
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array")
