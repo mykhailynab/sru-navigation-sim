@@ -83,8 +83,8 @@ def main():
     # Override num_envs for video (more robots = more interesting)
     env_cfg.scene.num_envs = args_cli.num_envs
 
-    # Use a reasonable video resolution (landscape 1920x1080)
-    env_cfg.viewer.resolution = (1080, 1920)
+    # 2x the base VIZ resolution (1080x1920), then center-crop 50% after capture
+    env_cfg.viewer.resolution = (2160, 3840)
 
     # Create environment with rgb_array for frame capture
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array")
@@ -135,13 +135,19 @@ def main():
         print("[ERROR] No frames captured — check that cameras are enabled")
         return
 
+    # Center-crop 50% of each frame (keep middle 50% height and width)
+    stacked = np.stack(frames)
+    _, h, w, _ = stacked.shape
+    h4, w4 = h // 4, w // 4
+    stacked = stacked[:, h4:h - h4, w4:w - w4, :]
+
     # Write mp4 using imageio
     import imageio.v3 as iio
 
-    fps = 30  # int(1.0 / env.unwrapped.step_dt)
+    fps = 30
     output_path = os.path.abspath(args_cli.output)
-    print(f"[INFO] Writing {len(frames)} frames at {fps} FPS to: {output_path}")
-    iio.imwrite(output_path, np.stack(frames), fps=fps, codec="h264")
+    print(f"[INFO] Writing {len(frames)} frames ({stacked.shape[1]}x{stacked.shape[2]}) at {fps} FPS to: {output_path}")
+    iio.imwrite(output_path, stacked, fps=fps, codec="h264")
     print(f"[INFO] Done! Video saved to: {output_path}")
 
 
