@@ -137,7 +137,7 @@ class B2WNavigationEnvCfgBallTarget_VIZ(B2WNavigationEnvCfgBallTarget):
         self.scene.terrain.terrain_generator.num_rows = 2
         self.scene.terrain.terrain_generator.num_cols = 4
         self.scene.terrain.terrain_generator.curriculum = True
-        self.scene.terrain.terrain_generator.difficulty_range = [1.0, 1.0]
+        # self.scene.terrain.terrain_generator.difficulty_range = [1.0, 1.0]
         self.scene.terrain.max_init_terrain_level = None
 
         for sub_cfg in self.scene.terrain.terrain_generator.sub_terrains.values():
