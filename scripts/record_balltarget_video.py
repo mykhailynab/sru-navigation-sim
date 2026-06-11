@@ -138,7 +138,7 @@ def main():
     # Write mp4 using imageio
     import imageio.v3 as iio
 
-    fps = int(1.0 / env.unwrapped.step_dt)
+    fps = 30  # int(1.0 / env.unwrapped.step_dt)
     output_path = os.path.abspath(args_cli.output)
     print(f"[INFO] Writing {len(frames)} frames at {fps} FPS to: {output_path}")
     iio.imwrite(output_path, np.stack(frames), fps=fps, codec="h264")
