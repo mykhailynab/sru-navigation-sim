@@ -44,6 +44,8 @@ parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
 parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy training iterations.")
 parser.add_argument("--run_name", type=str, default=None, help="Name of the wandb run (appended to log directory).")
+parser.add_argument("--pretrained_critic_weights", type=str, default=None, help="Path to .pt checkpoint to load critic weights from (actor stays random).")
+parser.add_argument("--freeze_pretrained_critic_for", type=int, default=500, help="Freeze loaded critic for this many iterations (default: 500).")
 
 # Append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
@@ -117,6 +119,13 @@ def main():
 
     # Create runner
     runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
+    # Load pretrained critic weights if specified
+    if args_cli.pretrained_critic_weights:
+        runner.load_critic_weights(
+            args_cli.pretrained_critic_weights,
+            freeze_for=args_cli.freeze_pretrained_critic_for,
+        )
+
     # Write git state to log
     runner.add_git_repo_to_log(__file__)
     # Save configuration

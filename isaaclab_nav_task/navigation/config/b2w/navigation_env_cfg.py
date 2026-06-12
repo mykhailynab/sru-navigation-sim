@@ -23,6 +23,7 @@ from isaaclab_nav_task.navigation.navigation_env_cfg import (
 import isaaclab_nav_task.navigation.mdp as mdp
 
 from isaaclab_nav_task.navigation.assets import B2W_CFG, ISAACLAB_NAV_TASKS_ASSETS_DIR  # isort: skip
+from isaaclab_nav_task.terrains import HfMazeTerrainCfg  # isort: skip
 
 
 LEG_JOINT_NAMES = [".*hip_joint", ".*thigh_joint", ".*calf_joint"]
@@ -124,6 +125,29 @@ class B2WNavigationEnvCfgBallTarget(B2WNavigationEnvCfg):
         )
 
         self.scene.terrain.terrain_generator.difficulty_range = [0.0, 1.0]
+        self.scene.terrain.terrain_generator.curriculum = True  # freshly added
+
+
+@configclass
+class B2WNavigationEnvCfgBallTarget_Flat(B2WNavigationEnvCfgBallTarget):
+    def __post_init__(self):
+        super().__post_init__()
+
+        # Replace all sub-terrains with a single flat one (no obstacles)
+        self.scene.terrain.terrain_generator.sub_terrains = {
+            "flat": HfMazeTerrainCfg(
+                proportion=1.0,
+                open_probability=1.0,
+                grid_size=(15, 15),
+                cell_size=2.0,
+                add_noise_to_flat=False,
+                add_goal=True,
+                randomize_wall=False,
+                random_wall_ratio=0.0,
+                non_maze_terrain=True,
+            ),
+        }
+        self.scene.terrain.terrain_generator.difficulty_range = [0.0, 0.0]
 
 
 @configclass
