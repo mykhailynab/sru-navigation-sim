@@ -125,7 +125,7 @@ class B2WNavigationEnvCfgBallTarget(B2WNavigationEnvCfg):
         )
 
         self.scene.terrain.terrain_generator.difficulty_range = [0.0, 1.0]
-        self.scene.terrain.terrain_generator.curriculum = True  # freshly added
+        self.scene.terrain.terrain_generator.curriculum = True  # freshly added, not in the first experiment
 
 
 @configclass
